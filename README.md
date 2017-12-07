@@ -9,15 +9,14 @@ backup is symlinked to the folder "current". Duplicate files
 get hard linked. So the do not use up disk space (except for
 the link information.)
 
-Logs get saved to $LOG_FILE.
-
 ## Configuration
 
-Set up backup jobs first. The are stored in $JOB_DIR.
+The general configuration is saved in backup.conf. Adjust
+the paths as needed.
 
 ### Example job
 
-```
+```sh
 # Name of the job. Mainly for logging purposes
 name="Example. Backups the home directory."
 
@@ -27,3 +26,8 @@ name="Example. Backups the home directory."
 src="/home/username/"
 dst="ssh_host:/home/username/backup"
 ```
+
+## Run!
+
+To run all defined jobs execute ```backup.sh```. If you want
+to run one particular job run ```backup.sh /path/to/job.conf```.
