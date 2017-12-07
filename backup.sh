@@ -9,8 +9,6 @@ ANSI_GREEN="\e[32m"
 ANSI_RED="\e[31m"
 ANSI_NONE="\e[0m"
 
-TIMESTAMP=$(date +%F_%H-%M-%S)
-
 # LOAD CONFIG
 [ -r "/etc/backup.conf" ] && source "/etc/backup.conf" \
 || [ -r "$SCRIPTDIR/backup.conf" ] && source "$SCRIPTDIR/backup.conf" \
@@ -112,7 +110,8 @@ backup() {
     else
         # Hard link a folder with today's date
         # as name to the "current" folder
-        run_command "$dst_server" "rm \"$dst_dir/current\"; ln -s \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
+        run_command "$dst_server" "test -L \"$dst_dir/current\" && rm \"$dst_dir/current\""; 
+        run_command "$dst_server" "ln -s \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
         [ $? -eq 0 ] || {
             errorf "Could not (soft) link \"$dst_dir/$TIMESTAMP\" to \"$dst_dir/current\"."
             echof "BACKUP FAILED"
@@ -134,7 +133,6 @@ echof "STARTING BACKUP"
 if [ -z $1 ] ; then
     # Find jobs
     JOBS=( $(find -L "./jobs-active.d" -type f | grep "\.$JOB_EXT\$") )
-    echo "find -L \"$JOB_DIR\" -type f -name *.$JOB_EXT"
     [ ${#JOBS[@]} -ne 0 ] || {
         errorf "No jobs found in \"$JOB_DIR\"!"
         exit 1;
