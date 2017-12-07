@@ -86,14 +86,13 @@ backup() {
     run_command "$dst_server" "test -L \"$dst_dir/current\""
     [ $? -eq 0 ] || { initial_run=0; }
     if [ $initial_run -eq 0 ] ; then
-        echof "  \"$dst_dir/current\" does not exist. First run."
+        echof "  \"$dst_dir/current/\" does not exist. First run."
+        error=$(rsync $options "$src" "$dst/$TIMESTAMP.incomplete" 2>&1 >> $RSYNC_LOG)
     else
-        options="$options --link-dest=\"$dst_dir/current/\""
+        # Start rsync, just grab the sterr output
+        error=$(rsync $options --link-dest="$dst_dir/current/" "$src" "$dst/$TIMESTAMP.incomplete" 2>&1 >> $RSYNC_LOG)
     fi
     
-    # Start rsync, just grab the sterr output
-    error=$(rsync $options "$src" "$dst/$TIMESTAMP" 2>&1)
-
     # Check rsync exit code
     if [ $? -ne 0 ] ; then
     
@@ -108,10 +107,18 @@ backup() {
         }
         
     else
+        # Remove ".incomplete" ending from the folder name
+        run_command "$dst_server" "mv \"$dst_dir/$TIMESTAMP.incomplete\" \"$dst_dir/$TIMESTAMP\""
+        [ $? -eq 0 ] || {
+            errorf "Could move \"$dst_dir/$TIMESTAMP.incomplete\" to \"$dst_dir/$TIMESTAMP\"."
+            echof "BACKUP FAILED"
+            echo >> $LOG_FILE
+            exit 1
+        }
+        
         # Hard link a folder with today's date
         # as name to the "current" folder
-        run_command "$dst_server" "test -L \"$dst_dir/current\" && rm \"$dst_dir/current\""; 
-        run_command "$dst_server" "ln -s \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
+        run_command "$dst_server" "rm -f \"$dst_dir/current\"; ln -s \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
         [ $? -eq 0 ] || {
             errorf "Could not (soft) link \"$dst_dir/$TIMESTAMP\" to \"$dst_dir/current\"."
             echof "BACKUP FAILED"
