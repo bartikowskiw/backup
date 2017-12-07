@@ -6,8 +6,8 @@ rsync based incremental backups.
 
 The script creates folders with the date as name. The newest
 backup is symlinked to the folder "current". Duplicate files
-get hard linked. So the do not use up disk space (except for
-the link information.)
+get hard linked. So they do not use up disk space (except for
+the link information and directory structure).
 
 ## Configuration
 
