@@ -1,5 +1,5 @@
 #!/bin/bash
-SCRIPTDIR=$(dirname "$0")
+SCRIPTDIR=$( dirname "$(readlink -f "$0")" )
 
 # CONSTANTS
 
