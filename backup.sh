@@ -1,5 +1,6 @@
 #!/bin/bash
 SCRIPTDIR=$( dirname "$(readlink -f "$0")" )
+CONFDIRS=( "$SCRIPTDIR/conf" "/etc/backup" )
 
 # CONSTANTS
 
@@ -10,10 +11,25 @@ ANSI_RED="\e[31m"
 ANSI_NONE="\e[0m"
 
 # LOAD CONFIG
-[ -r "/etc/backup.conf" ] && source "/etc/backup.conf" \
-|| [ -r "$SCRIPTDIR/backup.conf" ] && source "$SCRIPTDIR/backup.conf" \
-|| {
+#[ -r "/etc/backup.conf" ] && source "/etc/backup/backup.conf" \
+#|| [ -r "$SCRIPTDIR/conf/backup.conf" ] && source "$SCRIPTDIR/conf/backup.conf" \
+#|| {
+#    echo "Configuration not found!"
+#    exit 1
+#}
+
+CONF_NOT_FOUND=1
+for CONFDIR in ${CONFDIRS[@]} ; do
+    if [ -r "$CONFDIR/backup.conf" ] ; then
+        source "$CONFDIR/backup.conf"
+        CONF_NOT_FOUND=0
+        break
+    fi
+done
+
+[ $CONF_NOT_FOUND -eq 1 ] && {
     echo "Configuration not found!"
+    echo "Searched in: ${CONFDIRS[@]}"
     exit 1
 }
 
@@ -139,7 +155,7 @@ echof "STARTING BACKUP"
 
 if [ -z $1 ] ; then
     # Find jobs
-    JOBS=( $(find -L "./jobs-active.d" -type f | grep "\.$JOB_EXT\$") )
+    JOBS=( $(find -L "$JOB_DIR" -type f | grep "\.$JOB_EXT\$") )
     [ ${#JOBS[@]} -ne 0 ] || {
         errorf "No jobs found in \"$JOB_DIR\"!"
         exit 1;

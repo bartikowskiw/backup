@@ -1,2 +1,2 @@
-jobs-active.d/*.conf
+conf/jobs-active.d/*.conf
 *.log
