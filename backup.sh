@@ -128,7 +128,7 @@ backup() {
         
         # Hard link a folder with today's date
         # as name to the "current" folder
-        run_command "$dst_server" "rm -f \"$dst_dir/current\"; ln -s \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
+        run_command "$dst_server" "ln -nfs \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
         [ $? -eq 0 ] || {
             errorf "Could not (soft) link \"$dst_dir/$TIMESTAMP\" to \"$dst_dir/current\"."
             echof "BACKUP FAILED"
