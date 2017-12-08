@@ -11,12 +11,6 @@ ANSI_RED="\e[31m"
 ANSI_NONE="\e[0m"
 
 # LOAD CONFIG
-#[ -r "/etc/backup.conf" ] && source "/etc/backup/backup.conf" \
-#|| [ -r "$SCRIPTDIR/conf/backup.conf" ] && source "$SCRIPTDIR/conf/backup.conf" \
-#|| {
-#    echo "Configuration not found!"
-#    exit 1
-#}
 
 CONF_NOT_FOUND=1
 for CONFDIR in ${CONFDIRS[@]} ; do
