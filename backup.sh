@@ -42,6 +42,16 @@ errorf() {
     echo "[`date`] ERROR: $1" >> $LOG_FILE
 }
 
+# Checks if script is running already
+lock() {
+   
+    [ -w $(dirname $FLOCK_FILE)  ] || exitf "File lock $FLOCK_FILE file not writeable!"
+    eval "exec $FLOCK_FD>$FLOCK_FILE"
+    flock -n $FLOCK_FD \
+        && return 0 \
+        || return 1
+}
+
 # Run command SERVER COMMAND
 run_command() {
     if [ "$1" = "" ] ; then
@@ -145,6 +155,13 @@ backup() {
 # HEAD
 #
 
+# Check lock
+lock || {
+    errorf "Script already running. Quitting"
+    exit 1
+}
+
+# Start
 echof "STARTING BACKUP"
 
 if [ -z $1 ] ; then
