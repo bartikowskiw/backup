@@ -1,2 +1,3 @@
 conf/jobs-active.d/*.conf
+conf/backup.conf
 *.log
