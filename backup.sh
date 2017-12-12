@@ -71,6 +71,7 @@ backup() {
     local error=""
     local error_code=0
     local initial_run=1
+    local args=""
     
     # Load config
     source $1
@@ -107,11 +108,14 @@ backup() {
     [ $? -eq 0 ] || { initial_run=0; }
     if [ $initial_run -eq 0 ] ; then
         echof "  \"$dst_dir/current/\" does not exist. First run."
-        error=$(rsync $options "$src" "$dst/$TIMESTAMP.incomplete" 2>&1 >> $RSYNC_LOG)
     else
         # Start rsync, just grab the sterr output
-        error=$(rsync $options --link-dest="$dst_dir/current/" "$src" "$dst/$TIMESTAMP.incomplete" 2>&1 >> $RSYNC_LOG)
+        option="$options --link-dest=\"$dst_dir/current/\""
     fi
+    
+    # Run!
+    args="$options \"$src\" \"$dst/$TIMESTAMP.incomplete\""
+    error=$(eval "rsync $args 2>&1 >> $RSYNC_LOG")
     
     # Check rsync exit code
     if [ $? -ne 0 ] ; then
