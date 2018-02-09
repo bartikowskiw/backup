@@ -42,6 +42,12 @@ errorf() {
     echo "[`date`] ERROR: $1" >> $LOG_FILE
 }
 
+# Write to stderr and exit
+exitf() {
+    errorf "$1"
+    exit 1
+}
+
 # Checks if script is running already
 lock() {
    
