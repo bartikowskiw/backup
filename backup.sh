@@ -50,7 +50,7 @@ exitf() {
 
 # Checks if script is running already
 lock() {
-   
+
     [ -w $(dirname $FLOCK_FILE)  ] || exitf "File lock $FLOCK_FILE file not writeable!"
     eval "exec $FLOCK_FD>$FLOCK_FILE"
     flock -n $FLOCK_FD \
@@ -78,36 +78,36 @@ backup() {
     local error_code=0
     local initial_run=1
     local args=""
-    
+
     # Load config
     source $1
-    
+
     # Split src and dst
     local src_server=$(echo "$src" | grep ":" | egrep -o "^[^:]*")
     local src_dir=$(echo "$src" | egrep -o "[^:]*$")
-    
+
     local dst_server=$(echo "$dst" | grep ":" | egrep -o "^[^:]*")
     local dst_dir=$(echo "$dst" | egrep -o "[^:]*$")
-    
+
     echof "Starting job \"$name\""
-    
+
     echof "  Source: $src_server $src_dir"
     echof "  Destination: $dst_server $dst_dir"
-    
+
     # Check source dir
     run_command "$src_server" "test -d \"$src_dir\" && test -r \"$src_dir\" && test -x \"$src_dir\""
     [ $? -eq 0 ] || {
         errorf "  Configuration error: Source $src_server$src_dir is invalid."
         exit 1
     }
-    
+
     # Check dest dir
     run_command "$dst_server" "test -d \"$dst_dir\" && test -w \"$dst_dir\" && test -x \"$dst_dir\""
     [ $? -eq 0 ] || {
         errorf "  Configuration error: Destination $dst_server$dst_dir is invalid."
         exit 1
     }
-    
+
     # Checks if the "current" symlink exists,
     # and adds the last_dest option
     run_command "$dst_server" "test -L \"$dst_dir/current\""
@@ -118,24 +118,24 @@ backup() {
         # Start rsync, just grab the sterr output
         option="$options --link-dest=\"$dst_dir/current/\""
     fi
-    
+
     # Run!
     args="$options \"$src\" \"$dst/$TIMESTAMP.incomplete\""
     error=$(eval "rsync $args 2>&1 >> $RSYNC_LOG")
-    
+
     # Check rsync exit code
     if [ $? -ne 0 ] ; then
-    
+
         errorf "  Job \"$name\" failed"
         errorf "  $error"
-        
+
         # Quit, if configuration says so
         [ $QUIT_ON_ERROR -ne 0 ] && {
             echof "BACKUP FAILED"
             echo >> $LOG_FILE
             exit 1
         }
-        
+
     else
         # Remove ".incomplete" ending from the folder name
         run_command "$dst_server" "mv \"$dst_dir/$TIMESTAMP.incomplete\" \"$dst_dir/$TIMESTAMP\""
@@ -145,17 +145,17 @@ backup() {
             echo >> $LOG_FILE
             exit 1
         }
-        
+
         # Hard link a folder with today's date
         # as name to the "current" folder
-        run_command "$dst_server" "ln -nfs \"$dst_dir/$TIMESTAMP\" \"$dst_dir/current\""
+        run_command "$dst_server" "cd \"$dst_dir/\"; ln -nfs \"$TIMESTAMP\" \"current\""
         [ $? -eq 0 ] || {
             errorf "Could not (soft) link \"$dst_dir/$TIMESTAMP\" to \"$dst_dir/current\"."
             echof "BACKUP FAILED"
             echo >> $LOG_FILE
             exit 1
         }
-        
+
         # We are done
         echof "  Job \"$name\" finished"
     fi
