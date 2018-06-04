@@ -120,7 +120,7 @@ backup() {
     fi
 
     # Run!
-    args="$options \"$src\" \"$dst/$TIMESTAMP.incomplete\""
+    args="$option \"$src\" \"$dst/$TIMESTAMP.incomplete\""
     error=$(eval "rsync $args 2>&1 >> $RSYNC_LOG")
 
     # Check rsync exit code
