@@ -116,11 +116,11 @@ backup() {
         echof "  \"$dst_dir/current/\" does not exist. First run."
     else
         # Start rsync, just grab the sterr output
-        option="$options --link-dest=\"$dst_dir/current/\""
+        options="$options --link-dest=\"$dst_dir/current/\""
     fi
 
     # Run!
-    args="$option \"$src\" \"$dst/$TIMESTAMP.incomplete\""
+    args="$options \"$src\" \"$dst/$TIMESTAMP.incomplete\""
     error=$(eval "rsync $args 2>&1 >> $RSYNC_LOG")
 
     # Check rsync exit code
