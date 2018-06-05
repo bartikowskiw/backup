@@ -126,7 +126,7 @@ backup() {
     # Check rsync exit code
     if [ $? -ne 0 ] ; then
 
-        errorf "  Job \"$name\" failed"
+        errorf "  Job \"$name\" failed. Rsync error code $?."
         errorf "  $error"
 
         # Quit, if configuration says so
@@ -140,7 +140,7 @@ backup() {
         # Remove ".incomplete" ending from the folder name
         run_command "$dst_server" "mv \"$dst_dir/$TIMESTAMP.incomplete\" \"$dst_dir/$TIMESTAMP\""
         [ $? -eq 0 ] || {
-            errorf "Could move \"$dst_dir/$TIMESTAMP.incomplete\" to \"$dst_dir/$TIMESTAMP\"."
+            errorf "Could not move \"$dst_dir/$TIMESTAMP.incomplete\" to \"$dst_dir/$TIMESTAMP\"."
             echof "BACKUP FAILED"
             echo >> $LOG_FILE
             exit 1
