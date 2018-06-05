@@ -10,6 +10,15 @@ ANSI_GREEN="\e[32m"
 ANSI_RED="\e[31m"
 ANSI_NONE="\e[0m"
 
+# LOAD DEFAULT CONFIG
+if [ -r "$SCRIPTDIR/conf/backup.default.conf" ] ; then
+    source "$SCRIPTDIR/conf/backup.default.conf"
+else
+    echo "Default configuration not found or not readable!"
+    echo "Expected to find it here: $SCRIPTDIR/conf/backup.default.conf"
+    exit 1
+fi
+
 # LOAD CONFIG
 
 CONF_NOT_FOUND=1
@@ -78,6 +87,8 @@ backup() {
     local error_code=0
     local initial_run=1
     local args=""
+    local retries=$RETRIES_ON_ERROR
+    local sleep_after_error=$SLEEP_ON_ERROR
 
     # Load config
     source $1
@@ -119,24 +130,46 @@ backup() {
         options="$options --link-dest=\"$dst_dir/current/\""
     fi
 
-    # Run!
+    # Combine all rsync options
     args="$options \"$src\" \"$dst/$TIMESTAMP.incomplete\""
-    error=$(eval "rsync $args 2>&1 >> $RSYNC_LOG")
 
-    # Check rsync exit code
-    if [ $? -ne 0 ] ; then
+    # Run!
+    while true ; do
 
-        errorf "  Job \"$name\" failed. Rsync error code $?."
-        errorf "  $error"
+        error=$(eval "rsync $args 2>&1 >> $RSYNC_LOG")
+        error_code=$?
 
-        # Quit, if configuration says so
-        [ $QUIT_ON_ERROR -ne 0 ] && {
-            echof "BACKUP FAILED"
-            echo >> $LOG_FILE
-            exit 1
-        }
+        # Check rsync exit code
+        if [ $error_code -ne 0 ] ; then
+            errorf "  Job \"$name\" failed. (Rsync error code $error_code)."
+            errorf "  $error"
+            if [ $retries -gt 0 ] ; then
+                echof "  $retries retries left. Waiting for $sleep_after_error seconds."
+                sleep $sleep_after_error
+                # Update values
+                sleep_after_error=$(( $sleep_after_error * 2 ))
+                retries=$(($retries-1))
+            else
+                errorf "  Giving up."
+                break
+            fi
 
-    else
+        else
+            # Exit loop if everything is okay
+           break
+        fi
+
+    done
+
+    # Quit, if configuration says so
+    [ $error_code -ne 0 ] && [ $QUIT_ON_ERROR -ne 0 ] && {
+        echof "BACKUP FAILED"
+        echo >> $LOG_FILE
+        exit 1
+    }
+
+    if [ $error_code -eq 0 ] ; then
+
         # Remove ".incomplete" ending from the folder name
         run_command "$dst_server" "mv \"$dst_dir/$TIMESTAMP.incomplete\" \"$dst_dir/$TIMESTAMP\""
         [ $? -eq 0 ] || {
@@ -158,7 +191,9 @@ backup() {
 
         # We are done
         echof "  Job \"$name\" finished"
+
     fi
+
 }
 
 #
