@@ -14,6 +14,10 @@ the link information and directory structure).
 The general configuration is saved in backup.conf. Adjust
 the paths as needed.
 
+The script loads the configuration from conf/backup.default.conf at first
+and overwrites the settings with the values given in conf/backup.conf
+or /etc/backup/backup.conf if this file does not exist. 
+
 ### Example job
 
 ```sh
