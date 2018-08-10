@@ -10,7 +10,47 @@ ANSI_GREEN="\e[32m"
 ANSI_RED="\e[31m"
 ANSI_NONE="\e[0m"
 
+# HELP SCREEN
+
+# Show help screen
+usage() {
+    echo
+    echo "$0 [options] [path/to/job.conf]"
+    echo
+    echo " Option        Description"
+    echo -ne "${ANSI_GREEN}"
+    echo -n " ------------- ----------------------------------------------"
+    echo -e "${ANSI_NONE}"
+    echo
+    echo " -n, --no-hup   Ignore HUP Signal: Continue in background "
+    echo "                even if the connection to the terminal gets "
+    echo "                lost."
+    echo " -h, --help     Show help."
+    echo
+}
+
+# ARGUMENTS
+
+OPTS=$( getopt -q -o hn --long help,no-hup -- "$@" )
+if [ $? -ne 0 ]; then
+    usage
+    exit
+fi
+
+eval set -- "$OPTS"
+
+while true; do
+    case "$1" in
+        -n | --no-hup ) trap "" HUP; shift ;;
+        -h | --help ) usage; exit; ;;
+        -- ) shift; break ;;
+        * ) break ;;
+    esac
+done
+
+
 # LOAD DEFAULT CONFIG
+
 if [ -r "$SCRIPTDIR/conf/backup.default.conf" ] ; then
     source "$SCRIPTDIR/conf/backup.default.conf"
 else
