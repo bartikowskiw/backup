@@ -76,6 +76,15 @@ run_command() {
     fi
 }
 
+# Look for not readable files and create a file with a list of them
+nr() {
+    src_server=$1
+    src_dir=$2
+
+    [ -w $(dirname $NR_FILE)  ] || exitf "File lock $NR_FILE file not writeable!"
+    run_command "$src_server" "find '$src_dir' ! -readable -and \( -type f -or -type d \) -printf '%P\n' 2>/dev/null"  > $NR_FILE
+}
+
 # Start backup
 backup() {
     local name="[No name]"
@@ -92,6 +101,9 @@ backup() {
 
     # Load config
     source $1
+
+    # Create escaped name
+    local name_escaped=$( echo "$name" | sed 's/[^a-z0-9]/_/gi' )
 
     # Split src and dst
     local src_server=$(echo "$src" | grep ":" | egrep -o "^[^:]*")
@@ -130,6 +142,20 @@ backup() {
         options="$options --link-dest=\"$dst_dir/current/\""
     fi
 
+    # Create non-readable files (and directories) list
+    if [[ $NR ]]; then
+        echof "  Looking for non-readable files and directories..."
+        nr "$src_server" "$src_dir"
+        nr_count=$( wc -l $NR_FILE | grep -o --color=never "[0-9]*" )
+        if [[ $nr_count > 0 ]]; then
+            echof "  Found $nr_count not readable item, see /tmp/${name_escaped}.backup.nr"
+            cp "$NR_FILE" "/tmp/${name_escaped}.backup.nr"
+            options="$options --exclude-from=\"$NR_FILE\""
+        else
+            echof "    Perfect. None found"
+        fi
+    fi
+
     # Combine all rsync options
     args="$options \"$src\" \"$dst/$TIMESTAMP.incomplete\""
 
@@ -160,6 +186,9 @@ backup() {
         fi
 
     done
+
+    # Remove not-readable files list
+    rm -f "$NR_FILE"
 
     # Quit, if configuration says so
     [ $error_code -ne 0 ] && [ $QUIT_ON_ERROR -ne 0 ] && {
