@@ -212,6 +212,7 @@ backup() {
             if [ $retries -gt 0 ] ; then
                 echof "  $retries retries left. Waiting for $sleep_after_error seconds."
                 sleep $sleep_after_error
+                echof "  Retrying now."
                 # Update values
                 sleep_after_error=$(( $sleep_after_error * 2 ))
                 retries=$(($retries-1))
